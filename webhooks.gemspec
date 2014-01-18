@@ -18,6 +18,8 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  spec.executables << 'webhooks_server'
+
   spec.add_dependency "goliath"
 
   spec.add_development_dependency "bundler", "~> 1.3"
