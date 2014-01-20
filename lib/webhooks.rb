@@ -1,6 +1,7 @@
-require "goliath"
-require "webhooks/version"
-require "webhooks/server"
+require 'goliath'
+
+require 'webhooks/version'
+require 'webhooks/server'
 
 module Webhooks
   def self.run!
@@ -10,5 +11,3 @@ module Webhooks
     runner.run
   end
 end
-
-
