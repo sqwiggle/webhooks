@@ -26,14 +26,14 @@ func Worker(jobs chan Event) {
 
 func Work(e Event) {
 	var wg sync.WaitGroup
-	for key, val := range e.InterestedUrls() {
+	for _, registration := range e.Registrations() {
 		wg.Add(1)
-		go func (registration_id int, registration_url string, e Event) {
+		go func (registration_id Registration, e Event) {
 			defer wg.Done()
 			i := 0
 			for i < 10 {
-				llog.Debugf("POSTING %v to %s", e.Data, registration_url)
-				resp, err := http.Post(registration_url, "test/html", strings.NewReader(e.Data))
+				llog.Debugf("POSTING %v to %s", e.Data, registration.Url)
+				resp, err := http.Post(registration.Url, "test/html", strings.NewReader(e.Data))
 				if err != nil {
 					llog.Error(err)
 				} else {
@@ -45,14 +45,14 @@ func Work(e Event) {
 					Response: "TODO",
 				})
 				if (resp.StatusCode >= 00 && resp.StatusCode< 300){
-					llog.Successf("WEBHOOK SUCCESS for %d to %s", e.Id, registration_url)
+					llog.Successf("WEBHOOK SUCCESS for %d to %s", e.Id, registration.Url)
 					return
 				}
 				<- time.After(time.Duration(10) * time.Second)
 				i++
 			}
-			llog.Errorf("WEBHOOK FAILURE for %d to %s", e.Id, registration_url)
-		}(key, val, e)
+			llog.Errorf("WEBHOOK FAILURE for %d to %s", e.Id, registration.Url)
+		}(registration, e)
 	}
 	wg.Wait()
 	result, err  := db.Exec(

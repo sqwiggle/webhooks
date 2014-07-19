@@ -10,6 +10,7 @@ type Event struct {
 	Id        int       `json:"id"`
 	AccountId int       `json:"account_id"`
 	Data      string    `json:"data"`
+	Key       string    `json:"key"`
 	Attempts  *[]*Event `json:"events,omitempty"`
 	State     string   `json:"state"`
 }
@@ -28,11 +29,12 @@ func (e *Event) Attributes() ([]string, []interface{}) {
 	}
 }
 
-func (e *Event) InterestedUrls() map[int]string {
-	result := make(map[int]string)
+func (e *Event) Registrations() []Registration {
+	var result []Registration
 	rows, err := db.Query(
-		"SELECT id, url FROM registrations WHERE account_id=?",
+		"SELECT id, url FROM registrations WHERE account_id=? AND key=?",
 		e.AccountId,
+		e.Key,
 	)
 	if err != nil {
 		llog.FATAL(err)
@@ -40,12 +42,14 @@ func (e *Event) InterestedUrls() map[int]string {
 
 	defer rows.Close()
 	for rows.Next() {
-		var url string
-		var id int
-		if err := rows.Scan(&id, &url); err != nil {
+		var reg = Registration{
+		  AccountId:e.AccountId,
+		  Key:e.Key,
+		}
+		if err := rows.Scan(&reg.Id, &reg.Url); err != nil {
 			llog.FATAL(err)
 		}
-		result[id] = url
+		result = append(result, reg)
 	}
 	if err := rows.Err(); err != nil {
 		llog.FATAL(err)
@@ -79,8 +83,8 @@ func GetEvents (account_id int) []*Event {
 
 func RegisterEvent (event Event) (Event, error) {
 	llog.Success("Attempting 2 Register event")
-	urls := event.InterestedUrls()
-	if len(urls) == 0 {
+	registrations := event.Registrations()
+	if len(registrations) == 0 {
 		return event, errors.New("Nothing registered for this event")
 	}
 	id, err := db.Create(&event)
