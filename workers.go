@@ -1,11 +1,11 @@
 package main
 
 import (
-	"net/http"
 	"github.com/awsmsrc/llog"
+	"net/http"
 	"strings"
-	"time"
 	"sync"
+	"time"
 )
 
 func EventDispatcher(ch chan Event, worker_count int) {
@@ -14,7 +14,7 @@ func EventDispatcher(ch chan Event, worker_count int) {
 		go Worker(jobs)
 	}
 	for {
-		jobs <- <- ch
+		jobs <- <-ch
 	}
 }
 
@@ -28,7 +28,7 @@ func Work(e Event) {
 	var wg sync.WaitGroup
 	for _, registration := range e.Registrations() {
 		wg.Add(1)
-		go func (registration_id Registration, e Event) {
+		go func(registration_id Registration, e Event) {
 			defer wg.Done()
 			i := 0
 			for i < 10 {
@@ -44,18 +44,18 @@ func Work(e Event) {
 					Status:   resp.StatusCode,
 					Response: "TODO",
 				})
-				if (resp.StatusCode >= 00 && resp.StatusCode< 300){
+				if resp.StatusCode >= 00 && resp.StatusCode < 300 {
 					llog.Successf("WEBHOOK SUCCESS for %d to %s", e.Id, registration.Url)
 					return
 				}
-				<- time.After(time.Duration(10) * time.Second)
+				<-time.After(time.Duration(10) * time.Second)
 				i++
 			}
 			llog.Errorf("WEBHOOK FAILURE for %d to %s", e.Id, registration.Url)
 		}(registration, e)
 	}
 	wg.Wait()
-	result, err  := db.Exec(
+	result, err := db.Exec(
 		"UPDATE events SET state = ? WHERE id =	?",
 		"processed",
 		e.Id,
@@ -64,7 +64,5 @@ func Work(e Event) {
 		llog.FATAL(err)
 	}
 	rows_affected, err := result.RowsAffected()
-	llog.Debugf("ev update %v + %v", rows_affected, err) 
+	llog.Debugf("ev update %v + %v", rows_affected, err)
 }
-
-

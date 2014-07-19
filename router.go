@@ -14,6 +14,7 @@ func InitRouter() *mux.Router {
 	r.HandleFunc("/accounts/{account_id:[0-9]+}/registrations", RegistrationsHandler)
 	r.HandleFunc("/accounts/{account_id:[0-9]+}/events", EventsHandler)
 	r.HandleFunc("/accounts/{account_id:[0-9]+}/attempts", AttemptsHandler)
+	r.NotFoundHandler = http.HandlerFunc(Render404)
 	return r
 }
 
@@ -23,7 +24,7 @@ func RegistrationsHandler(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
 		registrations := GetRegistrations(account_id)
-		RenderJson(w, registrations, 200)
+		Render(w, registrations, 200)
 	case "POST":
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
@@ -57,7 +58,7 @@ func EventsHandler(w http.ResponseWriter, req *http.Request) {
 	account_id, _ := strconv.Atoi(mux.Vars(req)["account_id"])
 	switch req.Method {
 	case "GET":
-		RenderJson(w, GetEvents(account_id), 200)
+		Render(w, GetEvents(account_id), 200)
 	case "POST":
 		llog.Infof("Params are :%+v", req)
 		body, err := ioutil.ReadAll(req.Body)
@@ -74,16 +75,12 @@ func EventsHandler(w http.ResponseWriter, req *http.Request) {
 
 		*event, err = RegisterEvent(*event)
 		if err != nil {
-		  http.Error(w, err.Error(), 500)
+			http.Error(w, err.Error(), 500)
 			return
 		}
-		RenderJson(w, event, 201)
+		Render(w, event, 201)
 	default:
-		http.Error(
-			w, 
-			"Method Not Allowed",
-			http.StatusMethodNotAllowed,
-		)
+		Render405(w)
 	}
 }
 
@@ -93,17 +90,13 @@ func AttemptsHandler(w http.ResponseWriter, req *http.Request) {
 	account_id, _ := strconv.Atoi(mux.Vars(req)["account_id"])
 	switch req.Method {
 	case "GET":
-		RenderJson(w, GetAttempts(account_id), 200)
+		Render(w, GetAttempts(account_id), 200)
 	default:
-		http.Error(
-			w, 
-			"Method Not Allowed",
-			http.StatusMethodNotAllowed,
-		)
+		Render405(w)
 	}
 }
 
-func RenderJson(w http.ResponseWriter, object interface{}, status int) {
+func Render(w http.ResponseWriter, object interface{}, status int) {
 	json, err := json.Marshal(object)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -112,5 +105,27 @@ func RenderJson(w http.ResponseWriter, object interface{}, status int) {
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(status)
 	w.Write(json)
+}
+
+func Render404(w http.ResponseWriter, req *http.Request) {
+	Render(
+		w,
+		&Error{
+			Status:404,
+			Message:"not found",
+		},
+		404,
+	)
+}
+
+func Render405(w http.ResponseWriter) {
+	Render(
+		w,
+		&Error{
+			Status:405,
+			Message:"method not allowed",
+		},
+		405,
+	)
 }
 

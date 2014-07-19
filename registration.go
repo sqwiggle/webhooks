@@ -6,7 +6,7 @@ import (
 
 type Registration struct {
 	Id        int    `json:"id"`
-	Key        string    `json:"key"`
+	Key       string `json:"key"`
 	AccountId int    `json:"account_id"`
 	Url       string `json:"url"`
 }
@@ -27,7 +27,7 @@ func (r *Registration) Attributes() ([]string, []interface{}) {
 		}
 }
 
-func GetRegistrations (account_id int) []*Registration {
+func GetRegistrations(account_id int) []*Registration {
 	var result []*Registration
 	rows, err := db.Query(
 		"SELECT id, account_id, url FROM registrations WHERE account_id=? LIMIT 100",

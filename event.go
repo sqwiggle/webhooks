@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"github.com/awsmsrc/llog"
 	"time"
-	"errors"
 )
 
 type Event struct {
@@ -12,7 +12,7 @@ type Event struct {
 	Data      string    `json:"data"`
 	Key       string    `json:"key"`
 	Attempts  *[]*Event `json:"events,omitempty"`
-	State     string   `json:"state"`
+	State     string    `json:"state"`
 }
 
 func (e *Event) TableName() string {
@@ -21,12 +21,12 @@ func (e *Event) TableName() string {
 
 func (e *Event) Attributes() ([]string, []interface{}) {
 	return []string{
-		"account_id",
-		"data",
-	}, []interface{}{
-		e.AccountId,
-		e.Data,
-	}
+			"account_id",
+			"data",
+		}, []interface{}{
+			e.AccountId,
+			e.Data,
+		}
 }
 
 func (e *Event) Registrations() []Registration {
@@ -43,8 +43,8 @@ func (e *Event) Registrations() []Registration {
 	defer rows.Close()
 	for rows.Next() {
 		var reg = Registration{
-		  AccountId:e.AccountId,
-		  Key:e.Key,
+			AccountId: e.AccountId,
+			Key:       e.Key,
 		}
 		if err := rows.Scan(&reg.Id, &reg.Url); err != nil {
 			llog.FATAL(err)
@@ -57,7 +57,7 @@ func (e *Event) Registrations() []Registration {
 	return result
 }
 
-func GetEvents (account_id int) []*Event {
+func GetEvents(account_id int) []*Event {
 	var result []*Event
 	rows, err := db.Query(
 		"SELECT id, account_id, data, state FROM events WHERE account_id=? LIMIT 100",
@@ -81,7 +81,7 @@ func GetEvents (account_id int) []*Event {
 	return result
 }
 
-func RegisterEvent (event Event) (Event, error) {
+func RegisterEvent(event Event) (Event, error) {
 	llog.Success("Attempting 2 Register event")
 	registrations := event.Registrations()
 	if len(registrations) == 0 {
@@ -94,12 +94,12 @@ func RegisterEvent (event Event) (Event, error) {
 	event.Id = int(id)
 	after := time.After(time.Duration(2) * time.Second)
 	var state string
-		llog.Success("Attempting 2 Q event")
+	llog.Success("Attempting 2 Q event")
 	select {
 	case queue <- event:
 		llog.Success("Event Queued")
 		state = "processing"
-	case <- after:
+	case <-after:
 		state = "timeout"
 	}
 	_, err = db.Exec(

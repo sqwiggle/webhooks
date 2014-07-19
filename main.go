@@ -1,8 +1,8 @@
 package main
 
 import (
-	"net/http"
 	"github.com/awsmsrc/llog"
+	"net/http"
 )
 
 var (
@@ -11,7 +11,7 @@ var (
 	worker_limit = 100
 )
 
-func init () {
+func init() {
 	StartTestServers()
 	db.Init()
 }
@@ -20,7 +20,7 @@ func main() {
 	llog.Info("main")
 	defer db.Close()
 
-  go EventDispatcher(queue, worker_limit)
+	go EventDispatcher(queue, worker_limit)
 
 	http.Handle("/", InitRouter())
 	err := http.ListenAndServe(":8080", nil)

@@ -27,7 +27,7 @@ func (a *Attempt) Attributes() ([]string, []interface{}) {
 		}
 }
 
-func GetAttempts (account_id int) []*Attempt {
+func GetAttempts(account_id int) []*Attempt {
 	var result []*Attempt
 	rows, err := db.Query(
 		"SELECT id, event_id, status, response FROM attempts LIMIT 100",
