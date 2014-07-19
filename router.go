@@ -28,12 +28,14 @@ func RegistrationsHandler(w http.ResponseWriter, req *http.Request) {
 	case "POST":
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			llog.FATAL(err)
+			Render400(w)
+			return
 		}
 		registration := new(Registration)
 		err = json.Unmarshal(body, registration)
 		if err != nil {
-			llog.FATAL(err)
+			Render400(w)
+			return
 		}
 		llog.Successf("struct created: %+v", registration)
 		_, err = db.Create(registration)
@@ -45,13 +47,12 @@ func RegistrationsHandler(w http.ResponseWriter, req *http.Request) {
 		llog.FATAL("TODO")
 	default:
 		http.Error(
-			w, 
+			w,
 			"Method Not Allowed",
 			http.StatusMethodNotAllowed,
 		)
 	}
 }
-
 
 //ACCOUNT EVENT CRUD
 func EventsHandler(w http.ResponseWriter, req *http.Request) {
@@ -63,13 +64,15 @@ func EventsHandler(w http.ResponseWriter, req *http.Request) {
 		llog.Infof("Params are :%+v", req)
 		body, err := ioutil.ReadAll(req.Body)
 		if err != nil {
-			llog.FATAL(err)
+			Render400(w)
+			return
 		}
 		llog.Debug(string(body))
 		event := new(Event)
 		err = json.Unmarshal(body, event)
 		if err != nil {
-			llog.FATAL(err)
+			Render400(w)
+			return
 		}
 		event.AccountId = account_id
 
@@ -95,37 +98,3 @@ func AttemptsHandler(w http.ResponseWriter, req *http.Request) {
 		Render405(w)
 	}
 }
-
-func Render(w http.ResponseWriter, object interface{}, status int) {
-	json, err := json.Marshal(object)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("content-type", "application/json")
-	w.WriteHeader(status)
-	w.Write(json)
-}
-
-func Render404(w http.ResponseWriter, req *http.Request) {
-	Render(
-		w,
-		&Error{
-			Status:404,
-			Message:"not found",
-		},
-		404,
-	)
-}
-
-func Render405(w http.ResponseWriter) {
-	Render(
-		w,
-		&Error{
-			Status:405,
-			Message:"method not allowed",
-		},
-		405,
-	)
-}
-
