@@ -5,10 +5,10 @@ import (
 )
 
 type Attempt struct {
-	Id       int    `json:"id"`
+	Id       int    `json:"id,omitempty"`
 	Status   int    `json:"status"`
 	Response string `json:"reaponse"`
-	EventId  int    `json:"event_id"`
+	EventId  int    `json:"event_id,omitempty"`
 }
 
 func (a *Attempt) TableName() string {
