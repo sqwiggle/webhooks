@@ -27,6 +27,18 @@ func Render400(w http.ResponseWriter) {
 	)
 }
 
+func RenderBadParam400(w http.ResponseWriter, param string) {
+	Render(
+		w,
+		&Error{
+			Status:  400,
+			Message: "missing or badly formatted parameter",
+			Param: param,
+		},
+		404,
+	)
+}
+
 func Render404(w http.ResponseWriter, req *http.Request) {
 	Render(
 		w,

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/awsmsrc/llog"
+	"github.com/awsmsrc/params"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
@@ -11,11 +12,41 @@ import (
 
 func InitRouter() *mux.Router {
 	r := mux.NewRouter()
+	r.HandleFunc("/accounts/{account_id:[0-9]+}/test", TestHandler)
 	r.HandleFunc("/accounts/{account_id:[0-9]+}/registrations", RegistrationsHandler)
 	r.HandleFunc("/accounts/{account_id:[0-9]+}/events", EventsHandler)
 	r.HandleFunc("/accounts/{account_id:[0-9]+}/attempts", AttemptsHandler)
 	r.NotFoundHandler = http.HandlerFunc(Render404)
 	return r
+}
+
+func TestHandler(w http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case "POST":
+		p, err := params.NewFromJsonRequestBody(req)
+		if err != nil {
+			Render400(w)
+			return
+		}
+		p.RequireString("data")
+		p.RequireString("url")
+		err = p.Validate()
+		if err != nil {
+			RenderBadParam400(w, err.(params.Error).Params[0])
+		}
+		m := p.Map()
+		t := &Tester{
+			Url: m["url"].(string),
+			Data: m["data"].(string),
+		}
+		attempt, err := t.Execute()
+		if err != nil {
+			llog.FATAL(err)
+		}
+		Render(w, attempt, 200)
+	default:
+		Render405(w)
+	}
 }
 
 //registration crud
@@ -46,11 +77,7 @@ func RegistrationsHandler(w http.ResponseWriter, req *http.Request) {
 	case "DELETE":
 		llog.FATAL("TODO")
 	default:
-		http.Error(
-			w,
-			"Method Not Allowed",
-			http.StatusMethodNotAllowed,
-		)
+		Render405(w)
 	}
 }
 
