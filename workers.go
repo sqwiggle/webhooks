@@ -35,18 +35,20 @@ func Work(e Event) {
 				llog.Debugf("POSTING %v to %s", e.Data, registration.Url)
 				resp, err := http.Post(registration.Url, "test/html", strings.NewReader(e.Data))
 				if err != nil {
-					llog.Error(err)
+					db.Create(&Attempt{
+						EventId:  e.Id,
+						Status:   0,
+					})
 				} else {
-					llog.Debugf("%v", resp)
-				}
-				db.Create(&Attempt{
-					EventId:  e.Id,
-					Status:   resp.StatusCode,
-					Response: "TODO",
-				})
-				if resp.StatusCode >= 00 && resp.StatusCode < 300 {
-					llog.Successf("WEBHOOK SUCCESS for %d to %s", e.Id, registration.Url)
-					return
+					db.Create(&Attempt{
+						EventId:  e.Id,
+						Status:   resp.StatusCode,
+						Response: "TODO",
+					})
+					if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+						llog.Successf("WEBHOOK SUCCESS for %d to %s", e.Id, registration.Url)
+						return
+					}
 				}
 				<-time.After(time.Duration(10) * time.Second)
 				i++
