@@ -32,7 +32,8 @@ func TestHandler(w http.ResponseWriter, req *http.Request) {
 		p.RequireString("url")
 		err = p.Validate()
 		if err != nil {
-			RenderBadParam400(w, err.(params.Error).Params[0])
+			RenderBadParam400(w, err.(*params.Error).Params[0])
+			return
 		}
 		m := p.Map()
 		t := &Tester{
@@ -41,7 +42,16 @@ func TestHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		attempt, err := t.Execute()
 		if err != nil {
-			llog.FATAL(err)
+			Render(
+				w,
+				map[string]Error{
+					"error":Error{
+						Message: "URL unavailable",
+					},
+				},
+				200,
+			)
+			return
 		}
 		Render(w, attempt, 200)
 	default:
